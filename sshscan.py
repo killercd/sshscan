@@ -153,7 +153,7 @@ class SSHScan():
     
 
         #for user in self.user_list:
-        for pwd in self.pass_list:
+        for psw in self.pass_list:
             psw=psw.strip("\n")
 
             if self.forced_exit:

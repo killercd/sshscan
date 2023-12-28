@@ -1,20 +1,21 @@
 #!/usr/bin/python3
 
-import configparser
 import fire
 import signal
 import sys
-from itertools import count
 import paramiko
 from socket import *
-
+import os
 import time
 from threading import Thread
+
 green_text = "\033[32m"
 reset_text = "\033[0m"
 
 
 ssh_scan = None
+res_path = "scanresult"
+
 def signal_handler(sig, frame):
     print('You pressed Ctrl+C!')
     global EXIT
@@ -98,6 +99,10 @@ class SSHScan():
         return "{}.{}.{}.{}".format(a,b,c,d)
 
     def hack_ssh(self):
+
+        if not os.path.exists(res_path):
+            os.mkdir(res_path)
+
         print("Scanning for ssh services...")
         while self.start_ip!=self.end_ip:
             if self.forced_exit:
@@ -174,7 +179,7 @@ class SSHScan():
 
                         ssh.close()
                         
-                        ww = open(ip+".txt",'w')
+                        ww = open(res_path+"/"+ip+".txt",'w')
                         for line in output:
                             ww.write(line)
                         ww.close()

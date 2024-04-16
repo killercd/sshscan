@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import fire
+import argparse
 import signal
 import sys
 import paramiko
@@ -154,10 +154,7 @@ class SSHScan():
             return
         finally:
             connSkt.close()
-            
-    
 
-        #for user in self.user_list:
         for psw in self.pass_list:
             psw=psw.strip("\n")
 
@@ -203,7 +200,6 @@ class SSHScan():
 
                 except (paramiko.ssh_exception.AuthenticationException, paramiko.ssh_exception.SSHException):
                     ssh.close()
-                    ###### remove ip if FIRST CRACKED option is enabled
                     continue
                 except:
                     self._remove_ip(ip)
@@ -243,4 +239,28 @@ def scan(start_ip,
     ssh_scan.hack_ssh()
 
 if __name__ == '__main__':
-  fire.Fire({'scan':scan})
+    parser = argparse.ArgumentParser(description="SSH penetration testing tool")
+    parser.add_argument("start_ip", help="Start ip address")
+    parser.add_argument("end_ip", help="Stop ip address")
+    parser.add_argument("user_file", help="Users file list")
+    parser.add_argument("password_file", help="Password file list")
+    parser.add_argument("--verbose", action="store_true", default=False, help="Set verbose output")
+    parser.add_argument("--port", default=22, help="Default ssh port")
+    parser.add_argument("--max-thread", default=10, help="Max threads")
+    parser.add_argument("--timeout", default=3, help="Connection timeout")
+    parser.add_argument("--command", default=None, help="Shell command")
+    parser.add_argument("--payload", default=None, help="Payload file")
+    parser.add_argument("--upload-dir", default=None, help="Upload directory")
+    args = parser.parse_args()
+    
+    scan(args.start_ip,
+        args.end_ip,
+        args.user_file,
+        args.password_file,
+        args.verbose,
+        int(args.port),
+        int(args.max_thread),
+        int(args.timeout),
+        args.command,
+        args.payload,
+        args.upload_dir)

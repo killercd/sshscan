@@ -23,36 +23,29 @@ pip install -r requirements.txt
 ## Usage
 ```bash
 
-python sshscan.py scan --help
+usage: sshscan.py [-h] [--verbose] [--port PORT] [--max-thread MAX_THREAD] [--timeout TIMEOUT] [--command COMMAND] [--payload PAYLOAD]
+                  [--upload-dir UPLOAD_DIR]
+                  start_ip end_ip user_file password_file
 
-NAME
-    sshscan.py scan
+SSH penetration testing tool
 
-SYNOPSIS
-    sshscan.py scan START_IP END_IP USER_FILE PASSWORD_FILE <flags>
+positional arguments:
+  start_ip              Start ip address
+  end_ip                Stop ip address
+  user_file             Users file list
+  password_file         Password file list
 
-POSITIONAL ARGUMENTS
-    START_IP
-    END_IP
-    USER_FILE
-    PASSWORD_FILE
-
-FLAGS
-    -v, --verbose=VERBOSE
-        Default: False
-    -p, --port=PORT
-        Default: 22
-    -m, --max_thread=MAX_THREAD
-        Default: 10
-    -t, --timeout=TIMEOUT
-        Default: 3
-    -c, --command=COMMAND
-        Type: Optional[]
-        Default: None
-
-NOTES
-    You can also use flags syntax for POSITIONAL ARGUMENTS
-(END)
+options:
+  -h, --help            show this help message and exit
+  --verbose             Set verbose output
+  --port PORT           Default ssh port
+  --max-thread MAX_THREAD
+                        Max threads
+  --timeout TIMEOUT     Connection timeout
+  --command COMMAND     Shell command
+  --payload PAYLOAD     Payload file
+  --upload-dir UPLOAD_DIR
+                        Upload directory
 
 
 ```
@@ -60,17 +53,13 @@ NOTES
 
 ### Default scan
 ```bash
-
-python sshscan.py scan 192.168.178.1 192.168.254 user.txt password.txt
-
+./sshscan.py 192.168.178.49 192.168.178.51 users.txt passwords.txt
 
 ```
 
 ### Execute command
 ```bash
-
-python sshscan.py scan 192.168.178.1 192.168.254 user.txt password.txt --port 22 -m 5 -t 5 -c "whoami && ls -all"
-
+./sshscan.py 192.168.178.49 192.168.178.51 users.txt passwords.txt --port 2222 --verbose --command "whoami && ls -all"
 
 ```
 
